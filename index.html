@@ -264,6 +264,71 @@ body::before {
   justify-content: center;
   padding: 120px 32px 80px;
   text-align: center;
+  overflow: hidden;
+}
+
+/* Animated mesh gradient background */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(124,58,237,0.3) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 60% at 80% 20%, rgba(245,158,11,0.25) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 50% 80%, rgba(6,182,212,0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 90% 70%, rgba(239,68,68,0.15) 0%, transparent 50%);
+  animation: heroShift 12s ease-in-out infinite alternate;
+}
+
+/* Slow-moving orbs */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: -1;
+  background:
+    radial-gradient(circle 300px at 30% 30%, rgba(124,58,237,0.15) 0%, transparent 70%),
+    radial-gradient(circle 250px at 70% 60%, rgba(245,158,11,0.12) 0%, transparent 70%),
+    radial-gradient(circle 200px at 50% 50%, rgba(6,182,212,0.1) 0%, transparent 70%);
+  animation: heroOrbs 20s ease-in-out infinite alternate;
+}
+
+/* Grid overlay */
+.hero-grid-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 70%);
+}
+
+/* Horizon glow line */
+.hero-glow-line {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-light), var(--brand), var(--accent-light), transparent);
+  opacity: 0.4;
+  z-index: -1;
+  box-shadow: 0 0 40px 10px rgba(124,58,237,0.15), 0 0 80px 20px rgba(245,158,11,0.1);
+}
+
+@keyframes heroShift {
+  0% { transform: scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1.1) rotate(2deg); opacity: 0.8; }
+}
+
+@keyframes heroOrbs {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(5%, -5%) rotate(15deg); }
 }
 
 .hero-badge {
@@ -1277,11 +1342,13 @@ footer a:hover { color: var(--text-primary); }
 
 <!-- ████████████ HERO ████████████ -->
 <section class="hero">
+  <div class="hero-grid-overlay"></div>
+  <div class="hero-glow-line"></div>
   <div class="hero-badge">
     <span class="dot"></span>
     Now in Private Beta
   </div>
-  <h1>Personalize Your<br><span class="gradient-text">Product Placement</span></h1>
+  <h1>Personalized<br><span class="gradient-text">Product Placement</span></h1>
   <p class="hero-sub">Make any movie, TV show, or video ad-relevant to your brand. AI-powered generative in-video product placement, personalized per viewer and rendered in real time.</p>
   <div class="hero-cta">
     <a href="#cta" class="btn-primary">
