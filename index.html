@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdScene AI — Every Frame Is Ad Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS
+   ═══════════════════════════════════════════ */
+:root {
+  --bg-deep: #050507;
+  --bg-base: #0A0A0F;
+  --bg-elevated: #111118;
+  --bg-card: #15151E;
+  --bg-card-hover: #1A1A26;
+
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
+
+  --text-primary: #EDEDF0;
+  --text-secondary: #8A8F9E;
+  --text-muted: #555868;
+
+  --accent: #7C3AED;
+  --accent-light: #A78BFA;
+  --accent-glow: rgba(124,58,237,0.25);
+
+  --brand: #F59E0B;
+  --brand-light: #FCD34D;
+  --brand-glow: rgba(245,158,11,0.3);
+
+  --success: #10B981;
+  --danger: #EF4444;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ═══════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* ═══════════════════════════════════════════
+   NOISE + GRAIN OVERLAY
+   ═══════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ═══════════════════════════════════════════
+   AMBIENT BLOBS
+   ═══════════════════════════════════════════ */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ambient .blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.08;
+  animation: float 20s ease-in-out infinite;
+}
+.ambient .blob:nth-child(1) {
+  width: 600px; height: 600px;
+  background: var(--accent);
+  top: -200px; left: -100px;
+  animation-delay: 0s;
+}
+.ambient .blob:nth-child(2) {
+  width: 500px; height: 500px;
+  background: var(--brand);
+  bottom: -150px; right: -100px;
+  animation-delay: -7s;
+  animation-duration: 25s;
+}
+.ambient .blob:nth-child(3) {
+  width: 400px; height: 400px;
+  background: #06B6D4;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: -14s;
+  animation-duration: 30s;
+  opacity: 0.04;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.05); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+
+/* ═══════════════════════════════════════════
+   NAV
+   ═══════════════════════════════════════════ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(5,5,7,0.7);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.3s var(--ease-out);
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+.nav-logo svg {
+  width: 32px;
+  height: 32px;
+}
+.nav-logo span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.nav-logo .ai-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--accent-glow);
+  color: var(--accent-light);
+  letter-spacing: 0.5px;
+}
+.nav-links {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+.nav-links a:hover { color: var(--text-primary); }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: #0F0F00;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px var(--brand-glow);
+}
+.btn-primary:hover::before { opacity: 1; }
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  text-decoration: none;
+}
+.btn-ghost:hover {
+  border-color: var(--accent-light);
+  background: var(--surface);
+  color: var(--accent-light);
+}
+
+/* ═══════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════ */
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 32px 80px;
+  text-align: center;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeUp 0.8s var(--ease-out) 0.2s forwards;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(40px, 6vw, 80px);
+  line-height: 1.05;
+  letter-spacing: -2px;
+  max-width: 900px;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.8s var(--ease-out) 0.35s forwards;
+}
+.hero h1 .gradient-text {
+  background: linear-gradient(135deg, var(--brand-light), var(--brand), #EF4444);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-sub {
+  font-size: clamp(16px, 2vw, 20px);
+  color: var(--text-secondary);
+  max-width: 640px;
+  line-height: 1.7;
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: fadeUp 0.8s var(--ease-out) 0.5s forwards;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  opacity: 0;
+  animation: fadeUp 0.8s var(--ease-out) 0.65s forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════
+   DEMO VIEWER — THE HERO DEMO
+   ═══════════════════════════════════════════ */
+.demo-section {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto 0;
+  padding: 0 32px;
+  opacity: 0;
+  animation: fadeUp 0.8s var(--ease-out) 0.85s forwards;
+}
+
+.demo-viewer {
+  position: relative;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 32px 80px -16px rgba(0,0,0,0.6),
+    0 0 120px -40px var(--accent-glow);
+}
+
+/* Editor chrome bar */
+.demo-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+.demo-chrome-dots {
+  display: flex; gap: 8px;
+}
+.demo-chrome-dots span {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--surface-hover);
+}
+.demo-chrome-dots span:first-child { background: #EF4444; }
+.demo-chrome-dots span:nth-child(2) { background: #F59E0B; }
+.demo-chrome-dots span:nth-child(3) { background: #22C55E; }
+.demo-chrome-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.demo-chrome-actions {
+  display: flex; gap: 12px;
+}
+.demo-chrome-actions span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.demo-chrome-actions span:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+/* The video frame area */
+.demo-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.demo-frame .scene {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, #1a1520, #0d0d1a 40%, #0a0e18);
+}
+
+/* Scene: a "movie" living room with table */
+.scene-room {
+  position: absolute;
+  inset: 0;
+}
+
+/* Stylized room background */
+.room-wall {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #1C1826 0%, #14111C 60%, #0F0D17 100%);
+}
+.room-floor {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, #1A1724, #15121E);
+  transform: perspective(500px) rotateX(2deg);
+  transform-origin: bottom;
+}
+
+/* Table */
+.table-surface {
+  position: absolute;
+  bottom: 28%;
+  left: 20%;
+  width: 60%;
+  height: 4%;
+  background: linear-gradient(90deg, #2A2234, #352940, #2A2234);
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.table-leg-l, .table-leg-r {
+  position: absolute;
+  bottom: 12%;
+  width: 3%;
+  height: 16%;
+  background: linear-gradient(180deg, #2A2234, #201A2C);
+  border-radius: 2px;
+}
+.table-leg-l { left: 24%; }
+.table-leg-r { right: 24%; }
+
+/* The product placement zone — the cup! */
+.cup-zone {
+  position: absolute;
+  bottom: 31.5%;
+  left: 42%;
+  width: 16%;
+  height: 18%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Generic cup (before) */
+.generic-cup {
+  position: relative;
+  width: 60px;
+  height: 72px;
+  transition: all 0.6s var(--ease-out);
+}
+.generic-cup .cup-body {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #8B8B8B, #6B6B6B);
+  border-radius: 4px 4px 8px 8px;
+  clip-path: polygon(5% 0%, 95% 0%, 88% 100%, 12% 100%);
+  position: relative;
+  transition: all 0.6s var(--ease-out);
+}
+.generic-cup .cup-handle {
+  position: absolute;
+  right: -14px;
+  top: 20%;
+  width: 16px;
+  height: 30px;
+  border: 3px solid #7B7B7B;
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+  transition: all 0.6s var(--ease-out);
+}
+.generic-cup .cup-steam {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+.generic-cup .cup-steam span {
+  width: 2px;
+  height: 16px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  animation: steam 2s ease-in-out infinite;
+}
+.generic-cup .cup-steam span:nth-child(2) { animation-delay: 0.3s; height: 20px; }
+.generic-cup .cup-steam span:nth-child(3) { animation-delay: 0.6s; height: 14px; }
+
+@keyframes steam {
+  0%, 100% { opacity: 0.15; transform: translateY(0) scaleX(1); }
+  50% { opacity: 0.4; transform: translateY(-8px) scaleX(1.5); }
+}
+
+/* Branded cup (after) — Starbucks-style */
+.cup-zone.branded .generic-cup .cup-body {
+  background: linear-gradient(135deg, #1E6B45, #165C3B);
+}
+.cup-zone.branded .generic-cup .cup-handle {
+  border-color: #1E6B45;
+}
+.cup-zone.branded .cup-logo {
+  opacity: 1;
+  transform: scale(1);
+}
+.cup-logo {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.5);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.6s var(--ease-out);
+  z-index: 2;
+}
+.cup-logo svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Window light effect */
+.room-light {
+  position: absolute;
+  top: 5%;
+  right: 10%;
+  width: 25%;
+  height: 35%;
+  background: linear-gradient(180deg, rgba(255,243,200,0.06), transparent);
+  clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+}
+
+/* AI Scan overlay */
+.ai-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.cup-zone.scanning .ai-scan-ring,
+.demo-frame.scanning .ai-scan {
+  opacity: 1;
+}
+
+.ai-scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-light), transparent);
+  top: 0;
+  animation: scanLine 2s linear infinite;
+  opacity: 0.5;
+}
+@keyframes scanLine {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+/* Detection boxes */
+.detect-box {
+  position: absolute;
+  border: 1.5px solid var(--accent-light);
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.4s var(--ease-out);
+}
+.detect-box::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -22px;
+  left: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-light);
+  background: rgba(124,58,237,0.3);
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.detect-box.active {
+  opacity: 1;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.detect-table {
+  bottom: 24%;
+  left: 18%;
+  width: 64%;
+  height: 24%;
+}
+.detect-cup {
+  bottom: 31%;
+  left: 40%;
+  width: 20%;
+  height: 22%;
+}
+
+/* HUD Overlay info */
+.hud-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out);
+}
+.hud-overlay.active { opacity: 1; }
+
+.hud-tl, .hud-tr, .hud-bl, .hud-br {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.hud-tl { top: 16px; left: 16px; }
+.hud-tr { top: 16px; right: 16px; text-align: right; }
+.hud-bl { bottom: 16px; left: 16px; }
+.hud-br { bottom: 16px; right: 16px; text-align: right; }
+
+.hud-label {
+  color: var(--accent-light);
+  font-weight: 500;
+}
+.hud-value {
+  color: var(--text-secondary);
+}
+.hud-success {
+  color: var(--success);
+}
+
+/* Scanline + vignette */
+.demo-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4));
+  z-index: 10;
+}
+
+/* ═══════════════════════════════════════════
+   TIMELINE BAR (below video)
+   ═══════════════════════════════════════════ */
+.demo-timeline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+}
+.timeline-play {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.timeline-play:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.timeline-play svg { width: 14px; height: 14px; fill: var(--text-primary); }
+
+.timeline-track {
+  flex: 1;
+  height: 32px;
+  background: var(--surface);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.timeline-bar {
+  position: absolute;
+  top: 0; bottom: 0;
+  border-radius: 4px;
+}
+.timeline-bar.video {
+  left: 0; width: 100%;
+  background: linear-gradient(90deg, #2A2040, #1E1830);
+}
+.timeline-bar.placement {
+  left: 35%; width: 30%;
+  background: linear-gradient(90deg, var(--accent-glow), rgba(124,58,237,0.15));
+  border: 1px solid rgba(124,58,237,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.timeline-bar.placement span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--accent-light);
+  white-space: nowrap;
+}
+.timeline-playhead {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--brand);
+  box-shadow: 0 0 8px var(--brand-glow);
+  transition: left 0.3s;
+}
+.timeline-playhead::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 10px; height: 10px;
+  background: var(--brand);
+  border-radius: 50%;
+}
+
+.timeline-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════
+   CONTROL PANEL — Interactive toggle
+   ═══════════════════════════════════════════ */
+.demo-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.toggle-group {
+  display: flex;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.toggle-btn {
+  padding: 10px 28px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+  position: relative;
+}
+.toggle-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+.toggle-btn.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+.toggle-btn:hover:not(.active) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.status-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background: rgba(16,185,129,0.1);
+  color: var(--success);
+  border: 1px solid rgba(16,185,129,0.2);
+}
+
+/* ═══════════════════════════════════════════
+   SECTION SHARED
+   ═══════════════════════════════════════════ */
+section {
+  position: relative;
+  z-index: 1;
+  padding: 120px 32px;
+}
+.section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-light);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.section-label::before {
+  content: '';
+  width: 24px; height: 1px;
+  background: var(--accent-light);
+}
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(32px, 4vw, 52px);
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+.section-desc {
+  font-size: 17px;
+  color: var(--text-secondary);
+  max-width: 560px;
+  line-height: 1.7;
+}
+
+/* ═══════════════════════════════════════════
+   HOW IT WORKS — 3-step pipeline
+   ═══════════════════════════════════════════ */
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 64px;
+}
+.pipe-step {
+  position: relative;
+  padding: 36px 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  transition: all 0.3s var(--ease-out);
+  overflow: hidden;
+}
+.pipe-step::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-light), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.pipe-step:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-card-hover);
+  transform: translateY(-4px);
+}
+.pipe-step:hover::before { opacity: 1; }
+
+.pipe-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 48px;
+  color: var(--surface-hover);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.pipe-icon {
+  width: 48px; height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--accent-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.pipe-icon svg {
+  width: 24px; height: 24px;
+  stroke: var(--accent-light);
+  fill: none;
+  stroke-width: 1.5;
+}
+.pipe-step h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+.pipe-step p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Connector arrows between steps */
+.pipe-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border: 6px solid transparent;
+  border-left-color: var(--border-strong);
+  z-index: 2;
+}
+
+/* ═══════════════════════════════════════════
+   FOR BRANDS + FOR PUBLISHERS
+   ═══════════════════════════════════════════ */
+.dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 64px;
+}
+.dual-card {
+  padding: 40px 36px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  transition: all 0.3s var(--ease-out);
+}
+.dual-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.dual-card.brands {
+  background: linear-gradient(135deg, rgba(245,158,11,0.04), var(--bg-card));
+}
+.dual-card.publishers {
+  background: linear-gradient(135deg, rgba(124,58,237,0.04), var(--bg-card));
+}
+.dual-card-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.dual-card.brands .dual-card-tag { color: var(--brand); }
+.dual-card.publishers .dual-card-tag { color: var(--accent-light); }
+
+.dual-card h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+}
+.dual-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dual-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.dual-card li svg {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.dual-card.brands li svg { stroke: var(--brand); fill: none; stroke-width: 2; }
+.dual-card.publishers li svg { stroke: var(--accent-light); fill: none; stroke-width: 2; }
+
+/* ═══════════════════════════════════════════
+   STATS BAR
+   ═══════════════════════════════════════════ */
+.stats-section {
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 72px 32px;
+}
+.stats-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  text-align: center;
+}
+.stat-item {}
+.stat-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: 1;
+  letter-spacing: -2px;
+  margin-bottom: 8px;
+}
+.stat-num .accent { color: var(--brand); }
+.stat-num .purple { color: var(--accent-light); }
+.stat-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════
+   BRANDS TICKER
+   ═══════════════════════════════════════════ */
+.ticker-section {
+  padding: 64px 32px;
+  text-align: center;
+}
+.ticker-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.ticker-track {
+  display: flex;
+  gap: 64px;
+  animation: ticker 30s linear infinite;
+  width: max-content;
+}
+.ticker-track span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+.ticker-track span:hover { opacity: 0.8; }
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ═══════════════════════════════════════════
+   CTA FINAL
+   ═══════════════════════════════════════════ */
+.cta-section {
+  text-align: center;
+  padding: 120px 32px 160px;
+}
+.cta-section .section-title {
+  max-width: 700px;
+  margin: 0 auto 20px;
+}
+.cta-section .section-desc {
+  margin: 0 auto 48px;
+  max-width: 500px;
+}
+.cta-group {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cta-section .btn-primary {
+  padding: 14px 36px;
+  font-size: 16px;
+}
+
+/* ═══════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════ */
+footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--border);
+  padding: 40px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+footer p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+footer a:hover { color: var(--text-primary); }
+
+/* ═══════════════════════════════════════════
+   SCROLL ANIMATIONS
+   ═══════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .pipeline { grid-template-columns: 1fr; }
+  .pipe-step:not(:last-child)::after { display: none; }
+  .dual-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 40px; }
+  .hero { padding: 100px 20px 60px; }
+  section { padding: 80px 20px; }
+  .demo-section { padding: 0 16px; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .toggle-btn { padding: 8px 16px; font-size: 12px; }
+}
+
+/* ═══════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Ambient background -->
+<div class="ambient">
+  <div class="blob"></div>
+  <div class="blob"></div>
+  <div class="blob"></div>
+</div>
+
+<!-- Navigation -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <a href="#" class="nav-logo" aria-label="AdScene AI home">
+    <svg viewBox="0 0 32 32" fill="none">
+      <rect x="2" y="6" width="28" height="20" rx="3" stroke="#A78BFA" stroke-width="1.5"/>
+      <path d="M2 10h28" stroke="#A78BFA" stroke-width="1.5" opacity="0.4"/>
+      <circle cx="16" cy="18" r="4" stroke="#F59E0B" stroke-width="1.5"/>
+      <path d="M14 18l1.5 1.5L19.5 16" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>AdScene</span>
+    <span class="ai-badge">AI</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#value">Solutions</a></li>
+    <li><a href="#stats">Impact</a></li>
+    <li><a href="#cta" class="btn-primary">Get Early Access</a></li>
+  </ul>
+</nav>
+
+<!-- ████████████ HERO ████████████ -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Now in Private Beta
+  </div>
+  <h1>Every Frame Is<br><span class="gradient-text">Ad Inventory</span></h1>
+  <p class="hero-sub">AI-powered generative product placement. Brands bid for in-scene placements that are personalized per viewer, unskippable, and rendered in real time.</p>
+  <div class="hero-cta">
+    <a href="#cta" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Request Demo
+    </a>
+    <a href="#how-it-works" class="btn-ghost">
+      See How It Works
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M4 9l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ████████████ INTERACTIVE DEMO ████████████ -->
+<div class="demo-section">
+  <div class="demo-viewer">
+    <!-- Chrome bar -->
+    <div class="demo-chrome">
+      <div class="demo-chrome-dots"><span></span><span></span><span></span></div>
+      <div class="demo-chrome-title">adscene_render_v3.scene</div>
+      <div class="demo-chrome-actions">
+        <span>4K</span>
+        <span>Scene 04</span>
+      </div>
+    </div>
+
+    <!-- Video frame -->
+    <div class="demo-frame" id="demoFrame">
+      <div class="scene">
+        <div class="scene-room">
+          <div class="room-wall"></div>
+          <div class="room-floor"></div>
+          <div class="room-light"></div>
+          <div class="table-surface"></div>
+          <div class="table-leg-l"></div>
+          <div class="table-leg-r"></div>
+
+          <!-- THE CUP — product placement target -->
+          <div class="cup-zone" id="cupZone">
+            <div class="generic-cup">
+              <div class="cup-steam">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="cup-body"></div>
+              <div class="cup-handle"></div>
+              <div class="cup-logo">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L9 7H3l5 4-2 7 6-4 6 4-2-7 5-4h-6L12 2z" fill="#1E6B45" stroke="#1E6B45" stroke-width="0.5"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI detection overlays -->
+        <div class="ai-scan" id="aiScan">
+          <div class="ai-scan-line"></div>
+        </div>
+        <div class="detect-box detect-table" data-label="SURFACE: table_wood_oak" id="detectTable"></div>
+        <div class="detect-box detect-cup" data-label="OBJECT: cup_generic_001" id="detectCup"></div>
+      </div>
+
+      <!-- HUD Overlay -->
+      <div class="hud-overlay" id="hudOverlay">
+        <div class="hud-tl">
+          <div><span class="hud-label">SCENE</span> <span class="hud-value">living_room_04</span></div>
+          <div><span class="hud-label">RES</span> <span class="hud-value">3840 x 2160</span></div>
+          <div><span class="hud-label">FPS</span> <span class="hud-value">23.976</span></div>
+        </div>
+        <div class="hud-tr">
+          <div><span class="hud-label">AI MODEL</span> <span class="hud-value">v3.2-prod</span></div>
+          <div><span class="hud-label">LATENCY</span> <span class="hud-value">12ms</span></div>
+          <div><span class="hud-label">CONFIDENCE</span> <span class="hud-success">98.7%</span></div>
+        </div>
+        <div class="hud-bl">
+          <div><span class="hud-label">PLACEMENT</span> <span class="hud-value" id="hudPlacement">idle</span></div>
+          <div><span class="hud-label">BRAND</span> <span class="hud-value" id="hudBrand">---</span></div>
+        </div>
+        <div class="hud-br">
+          <div><span class="hud-label">LIGHTING</span> <span class="hud-success">matched</span></div>
+          <div><span class="hud-label">OCCLUSION</span> <span class="hud-success">clear</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="demo-timeline">
+      <div class="timeline-play" id="timelinePlay" aria-label="Play timeline">
+        <svg viewBox="0 0 14 14"><polygon points="4,2 12,7 4,12"/></svg>
+      </div>
+      <div class="timeline-track">
+        <div class="timeline-bar video"></div>
+        <div class="timeline-bar placement"><span>PRODUCT PLACEMENT</span></div>
+        <div class="timeline-playhead" id="playhead"></div>
+      </div>
+      <div class="timeline-time">01:24 / 02:47</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="demo-controls">
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btnOriginal" type="button">Original</button>
+        <button class="toggle-btn" id="btnScan" type="button">AI Scan</button>
+        <button class="toggle-btn" id="btnPlaced" type="button">Product Placed</button>
+      </div>
+      <div class="status-chip" id="statusChip">READY</div>
+    </div>
+  </div>
+</div>
+
+<!-- ████████████ HOW IT WORKS ████████████ -->
+<section id="how-it-works">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-label">How It Works</span>
+      <h2 class="section-title">Three Steps to<br>In-Scene Placement</h2>
+      <p class="section-desc">Our AI analyzes every frame, identifies placeable surfaces and objects, then renders brand assets with photorealistic lighting and perspective.</p>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipe-step reveal reveal-delay-1">
+        <div class="pipe-num">01</div>
+        <div class="pipe-icon">
+          <svg viewBox="0 0 24 24"><path d="M15 10l-4 4l6 6l4-16l-18 7l4 2l2 6l3-4"/></svg>
+        </div>
+        <h3>Scan & Detect</h3>
+        <p>AI processes each frame to identify surfaces, objects, lighting conditions, depth maps, and occlusion boundaries in real time.</p>
+      </div>
+      <div class="pipe-step reveal reveal-delay-2">
+        <div class="pipe-num">02</div>
+        <div class="pipe-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h3>Match & Bid</h3>
+        <p>Brands bid on detected placement opportunities via programmatic auction. AI matches brand assets to scene context, viewer demographics, and content tone.</p>
+      </div>
+      <div class="pipe-step reveal reveal-delay-3">
+        <div class="pipe-num">03</div>
+        <div class="pipe-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 10l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Render & Deliver</h3>
+        <p>Products are composited into the scene with matched lighting, perspective correction, and natural occlusion. Personalized per viewer, served at the edge.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████ VALUE PROPS ████████████ -->
+<section id="value">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-label">Solutions</span>
+      <h2 class="section-title">Two Sides,<br>One Platform</h2>
+      <p class="section-desc">We connect brands seeking premium placement with publishers sitting on untapped inventory.</p>
+    </div>
+
+    <div class="dual-grid">
+      <div class="dual-card brands reveal reveal-delay-1">
+        <div class="dual-card-tag">For Brands</div>
+        <h3>Turn Every Scene Into Your Shelf</h3>
+        <ul>
+          <li>
+            <svg viewBox="0 0 18 18"><path d="M3 9l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Programmatic bidding on in-scene placements across streaming, UGC, and film
+          </li>
+          <li>
+            <svg viewBox="0 0 18 18"><path d="M3 9l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Personalized per viewer segment — same movie, different product placements
+          </li>
+          <li>
+            <svg viewBox="0 0 18 18"><path d="M3 9l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Unskippable by design: the product IS the content, not an interstitial
+          </li>
+          <li>
+            <svg viewBox="0 0 18 18"><path d="M3 9l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Full analytics: viewability, gaze tracking, brand recall measurement
+          </li>
+        </ul>
+      </div>
+      <div class="dual-card publishers reveal reveal-delay-2">
+        <div class="dual-card-tag">For Publishers</div>
+        <h3>Monetize Every Frame You Own</h3>
+        <ul>
+          <li>
+            <svg viewBox="0 0 18 18"><path d="M3 9l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Unlock new revenue from existing content libraries — no reshoots needed
+          </li>
+          <li>
+            <svg viewBox="0 0 18 18"><path d="M3 9l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Content integrity controls: set rules for what categories can appear
+          </li>
+          <li>
+            <svg viewBox="0 0 18 18"><path d="M3 9l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Real-time CPM dashboard with transparent auction mechanics
+          </li>
+          <li>
+            <svg viewBox="0 0 18 18"><path d="M3 9l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            SDK drops into any player — supports HLS, DASH, and direct stream
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████ STATS ████████████ -->
+<section class="stats-section" id="stats">
+  <div class="stats-grid">
+    <div class="stat-item reveal">
+      <div class="stat-num"><span class="accent">4.2</span>x</div>
+      <div class="stat-label">Higher brand recall vs<br>pre-roll ads</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-1">
+      <div class="stat-num"><span class="purple">$0</span></div>
+      <div class="stat-label">Production cost for<br>placement updates</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-2">
+      <div class="stat-num">12<span class="accent">ms</span></div>
+      <div class="stat-label">Average render latency<br>per frame</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-3">
+      <div class="stat-num">98<span class="purple">%</span></div>
+      <div class="stat-label">Viewer-perceived<br>naturalness score</div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████ BRAND TICKER ████████████ -->
+<section class="ticker-section">
+  <div class="ticker-label">Trusted by forward-thinking brands</div>
+  <div style="overflow:hidden;">
+    <div class="ticker-track">
+      <span>ACME Corp</span>
+      <span>NovaBev</span>
+      <span>Luxora</span>
+      <span>StreamMax</span>
+      <span>Kinetic Media</span>
+      <span>PixelForge</span>
+      <span>Orbit Studios</span>
+      <span>VelvetBrand</span>
+      <span>ACME Corp</span>
+      <span>NovaBev</span>
+      <span>Luxora</span>
+      <span>StreamMax</span>
+      <span>Kinetic Media</span>
+      <span>PixelForge</span>
+      <span>Orbit Studios</span>
+      <span>VelvetBrand</span>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████ FINAL CTA ████████████ -->
+<section class="cta-section" id="cta">
+  <span class="section-label reveal">Get Started</span>
+  <h2 class="section-title reveal">Ready to Turn Frames<br>Into Revenue?</h2>
+  <p class="section-desc reveal">Join our private beta. Limited slots for launch partners — brands and publishers.</p>
+  <div class="cta-group reveal">
+    <a href="#" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Request Early Access
+    </a>
+    <a href="#" class="btn-ghost">
+      Talk to Sales
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M9 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ████████████ FOOTER ████████████ -->
+<footer>
+  <p>&copy; 2026 AdScene AI. All rights reserved.</p>
+  <div style="display:flex;gap:24px;">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════
+   INTERACTIVE DEMO CONTROLLER
+   ═══════════════════════════════════════════ */
+(function () {
+  const cupZone = document.getElementById('cupZone');
+  const aiScan = document.getElementById('aiScan');
+  const detectTable = document.getElementById('detectTable');
+  const detectCup = document.getElementById('detectCup');
+  const hudOverlay = document.getElementById('hudOverlay');
+  const hudPlacement = document.getElementById('hudPlacement');
+  const hudBrand = document.getElementById('hudBrand');
+  const statusChip = document.getElementById('statusChip');
+  const playhead = document.getElementById('playhead');
+
+  const btnOriginal = document.getElementById('btnOriginal');
+  const btnScan = document.getElementById('btnScan');
+  const btnPlaced = document.getElementById('btnPlaced');
+
+  const buttons = [btnOriginal, btnScan, btnPlaced];
+
+  function setMode(mode) {
+    buttons.forEach(b => b.classList.remove('active'));
+
+    // Reset all
+    aiScan.style.opacity = '0';
+    detectTable.classList.remove('active');
+    detectCup.classList.remove('active');
+    cupZone.classList.remove('branded');
+    hudOverlay.classList.remove('active');
+
+    if (mode === 'original') {
+      btnOriginal.classList.add('active');
+      statusChip.textContent = 'ORIGINAL';
+      statusChip.style.color = 'var(--text-muted)';
+      statusChip.style.background = 'var(--surface)';
+      statusChip.style.borderColor = 'var(--border)';
+      hudPlacement.textContent = 'idle';
+      hudBrand.textContent = '---';
+      playhead.style.left = '30%';
+    }
+
+    if (mode === 'scan') {
+      btnScan.classList.add('active');
+      aiScan.style.opacity = '1';
+      hudOverlay.classList.add('active');
+      statusChip.textContent = 'SCANNING';
+      statusChip.style.color = 'var(--accent-light)';
+      statusChip.style.background = 'rgba(124,58,237,0.1)';
+      statusChip.style.borderColor = 'rgba(124,58,237,0.3)';
+      hudPlacement.textContent = 'detecting...';
+      hudBrand.textContent = '---';
+      playhead.style.left = '42%';
+
+      setTimeout(() => {
+        detectTable.classList.add('active');
+      }, 400);
+      setTimeout(() => {
+        detectCup.classList.add('active');
+        hudPlacement.textContent = '2 objects found';
+      }, 800);
+    }
+
+    if (mode === 'placed') {
+      btnPlaced.classList.add('active');
+      hudOverlay.classList.add('active');
+      cupZone.classList.add('branded');
+      statusChip.textContent = 'PLACED';
+      statusChip.style.color = 'var(--success)';
+      statusChip.style.background = 'rgba(16,185,129,0.1)';
+      statusChip.style.borderColor = 'rgba(16,185,129,0.2)';
+      hudPlacement.textContent = 'active';
+      hudBrand.textContent = 'GreenLeaf Coffee';
+      playhead.style.left = '50%';
+    }
+  }
+
+  btnOriginal.addEventListener('click', () => setMode('original'));
+  btnScan.addEventListener('click', () => setMode('scan'));
+  btnPlaced.addEventListener('click', () => setMode('placed'));
+
+  // Auto-cycle demo on first load
+  let autoCycled = false;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !autoCycled) {
+        autoCycled = true;
+        setTimeout(() => setMode('scan'), 1200);
+        setTimeout(() => setMode('placed'), 3200);
+      }
+    });
+  }, { threshold: 0.5 });
+  observer.observe(document.querySelector('.demo-viewer'));
+
+  // Initialize
+  setMode('original');
+})();
+
+/* ═══════════════════════════════════════════
+   SCROLL REVEAL
+   ═══════════════════════════════════════════ */
+(function () {
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  reveals.forEach(el => obs.observe(el));
+})();
+</script>
+
+</body>
+</html>
