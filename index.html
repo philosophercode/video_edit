@@ -1571,9 +1571,75 @@ footer a:hover { color: var(--text-primary); }
     }
   }
 
-  btnOriginal.addEventListener('click', () => setMode('original'));
-  btnScan.addEventListener('click', () => setMode('scan'));
-  btnPlaced.addEventListener('click', () => setMode('placed'));
+  btnOriginal.addEventListener('click', () => { stopPlayback(); setMode('original'); });
+  btnScan.addEventListener('click', () => { stopPlayback(); setMode('scan'); });
+  btnPlaced.addEventListener('click', () => { stopPlayback(); setMode('placed'); });
+
+  // ── Play / Pause ──
+  const playBtn = document.getElementById('timelinePlay');
+  const timelineTime = document.querySelector('.timeline-time');
+  let playing = false;
+  let playTimer = null;
+  let playStep = 0;
+  let playheadAnim = null;
+
+  const playSvg = '<svg viewBox="0 0 14 14"><polygon points="4,2 12,7 4,12"/></svg>';
+  const pauseSvg = '<svg viewBox="0 0 14 14"><rect x="3" y="2" width="3" height="10" rx="0.5"/><rect x="8" y="2" width="3" height="10" rx="0.5"/></svg>';
+
+  // Sequence: each step has a mode, playhead %, time label, and duration (ms)
+  const sequence = [
+    { mode: 'original', head: 10,  time: '00:12 / 02:47', dur: 1400 },
+    { mode: 'original', head: 22,  time: '00:38 / 02:47', dur: 1200 },
+    { mode: 'scan',     head: 35,  time: '00:52 / 02:47', dur: 2000 },
+    { mode: 'scan',     head: 45,  time: '01:10 / 02:47', dur: 1400 },
+    { mode: 'placed',   head: 50,  time: '01:24 / 02:47', dur: 2200 },
+    { mode: 'placed',   head: 58,  time: '01:38 / 02:47', dur: 1800 },
+    { mode: 'placed',   head: 65,  time: '01:52 / 02:47', dur: 1600 },
+    { mode: 'original', head: 75,  time: '02:10 / 02:47', dur: 1400 },
+    { mode: 'original', head: 88,  time: '02:32 / 02:47', dur: 1200 },
+    { mode: 'original', head: 97,  time: '02:45 / 02:47', dur: 800  },
+  ];
+
+  function runStep() {
+    if (!playing) return;
+    const s = sequence[playStep];
+    setMode(s.mode);
+    playhead.style.left = s.head + '%';
+    timelineTime.textContent = s.time;
+    playStep = (playStep + 1) % sequence.length;
+    // Loop back to start
+    if (playStep === 0) {
+      playTimer = setTimeout(() => {
+        if (!playing) return;
+        playhead.style.left = '2%';
+        timelineTime.textContent = '00:00 / 02:47';
+        playTimer = setTimeout(runStep, 600);
+      }, s.dur);
+    } else {
+      playTimer = setTimeout(runStep, s.dur);
+    }
+  }
+
+  function startPlayback() {
+    playing = true;
+    playStep = 0;
+    playBtn.innerHTML = pauseSvg;
+    playBtn.setAttribute('aria-label', 'Pause timeline');
+    playhead.style.transition = 'left 0.8s linear';
+    runStep();
+  }
+
+  function stopPlayback() {
+    playing = false;
+    clearTimeout(playTimer);
+    playBtn.innerHTML = playSvg;
+    playBtn.setAttribute('aria-label', 'Play timeline');
+    playhead.style.transition = 'left 0.3s';
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (playing) { stopPlayback(); } else { startPlayback(); }
+  });
 
   // Auto-cycle demo on first load
   let autoCycled = false;
