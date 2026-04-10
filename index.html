@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AdScene AI — Every Frame Is Ad Inventory</title>
+<title>AdScene AI — Personalize Your Product Placement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -23,9 +23,9 @@
   --border: rgba(255,255,255,0.08);
   --border-strong: rgba(255,255,255,0.14);
 
-  --text-primary: #EDEDF0;
-  --text-secondary: #8A8F9E;
-  --text-muted: #555868;
+  --text-primary: #FFFFFF;
+  --text-secondary: #FFFFFF;
+  --text-muted: #FFFFFF;
 
   --accent: #7C3AED;
   --accent-light: #A78BFA;
@@ -860,6 +860,74 @@ section {
 }
 
 /* ═══════════════════════════════════════════
+   VIDEO EXAMPLES
+   ═══════════════════════════════════════════ */
+.video-examples {
+  position: relative;
+  z-index: 1;
+  padding: 100px 32px 80px;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 56px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.video-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+}
+.video-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-4px);
+}
+
+.video-card video {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #000;
+}
+
+.video-label {
+  padding: 12px 16px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent-light);
+}
+.video-card:first-child .video-label {
+  color: var(--brand-light);
+}
+
+.video-caption {
+  padding: 12px 16px 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .video-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .video-examples {
+    padding: 60px 20px 40px;
+  }
+}
+
+/* ═══════════════════════════════════════════
    HOW IT WORKS — 3-step pipeline
    ═══════════════════════════════════════════ */
 .pipeline {
@@ -1213,8 +1281,8 @@ footer a:hover { color: var(--text-primary); }
     <span class="dot"></span>
     Now in Private Beta
   </div>
-  <h1>Every Frame Is<br><span class="gradient-text">Ad Inventory</span></h1>
-  <p class="hero-sub">AI-powered generative product placement. Brands bid for in-scene placements that are personalized per viewer, unskippable, and rendered in real time.</p>
+  <h1>Personalize Your<br><span class="gradient-text">Product Placement</span></h1>
+  <p class="hero-sub">Make any movie, TV show, or video ad-relevant to your brand. AI-powered generative in-video product placement, personalized per viewer and rendered in real time.</p>
   <div class="hero-cta">
     <a href="#cta" class="btn-primary">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -1224,6 +1292,40 @@ footer a:hover { color: var(--text-primary); }
       See How It Works
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M4 9l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
+  </div>
+</section>
+
+<!-- ████████████ VIDEO EXAMPLES ████████████ -->
+<section id="video-examples" class="video-examples">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-label">See It In Action</span>
+      <h2 class="section-title">One Scene,<br>Three Brands</h2>
+      <p class="section-desc">Watch how the same scene from a classic film is transformed with AI-powered product placement for different brands — seamlessly and in real time.</p>
+    </div>
+
+    <div class="video-grid" id="videoGrid">
+      <div class="video-card reveal reveal-delay-1">
+        <div class="video-label">Original</div>
+        <video src="lotus-esprit-clip-short.mp4" muted playsinline preload="auto" loop></video>
+        <p class="video-caption">The original scene — Lotus Esprit</p>
+      </div>
+      <div class="video-card reveal reveal-delay-2">
+        <div class="video-label">AI Placement</div>
+        <video src="tesla-cybertruck-clip.mp4" muted playsinline preload="auto" loop></video>
+        <p class="video-caption">Replaced with Tesla Cybertruck</p>
+      </div>
+      <div class="video-card reveal reveal-delay-3">
+        <div class="video-label">AI Placement</div>
+        <video src="prius-clip.mp4" muted playsinline preload="auto" loop></video>
+        <p class="video-caption">Replaced with Toyota Prius</p>
+      </div>
+      <div class="video-card reveal reveal-delay-4">
+        <div class="video-label">AI Placement</div>
+        <video src="ford-f150-clip.mp4" muted playsinline preload="auto" loop></video>
+        <p class="video-caption">Replaced with Ford F-150</p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1672,6 +1774,47 @@ footer a:hover { color: var(--text-primary); }
   }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
 
   reveals.forEach(el => obs.observe(el));
+})();
+</script>
+
+<script>
+// Sync autoplay all three videos when the grid scrolls into view
+(function() {
+  const grid = document.getElementById('videoGrid');
+  if (!grid) return;
+  const videos = grid.querySelectorAll('video');
+  let playing = false;
+
+  function syncPlay() {
+    // Reset all to start and play together
+    videos.forEach(v => { v.currentTime = 0; });
+    videos.forEach(v => { v.play(); });
+    playing = true;
+  }
+
+  function syncPause() {
+    videos.forEach(v => { v.pause(); });
+    playing = false;
+  }
+
+  // Keep videos in sync on each loop — reset all when the shortest one ends
+  videos.forEach(v => {
+    v.addEventListener('ended', () => {
+      videos.forEach(v2 => { v2.currentTime = 0; v2.play(); });
+    });
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !playing) {
+        syncPlay();
+      } else if (!entry.isIntersecting && playing) {
+        syncPause();
+      }
+    });
+  }, { threshold: 0.3 });
+
+  observer.observe(grid);
 })();
 </script>
 
